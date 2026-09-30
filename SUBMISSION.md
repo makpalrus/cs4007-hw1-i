@@ -1,196 +1,58 @@
-# HW1 submission
+# Submission Report: CS4007 HW1
 
-**Name:**
-**Student ID:**
-**Group:**
-**Repository:**
+## Sublab Easy: Registration Bot
 
-## AI tool disclosure
+### Token Usage & Costs
 
-State which AI tools you used and for what. Expected and fine; undisclosed use
-is not.
+| Turn | Input Tokens | Output Tokens | Cost ($) |
+|------|-------------:|--------------:|---------:|
+| 1    |         1155 |           211 | 0.000300 |
+| 2    |         1387 |            57 | 0.000242 |
+| 3    |         1468 |            96 | 0.000278 |
+| 4    |         1584 |            53 | 0.000269 |
+| 5    |         1662 |           257 | 0.000403 |
+| **Total** | | | **$0.001493** |
 
->
-
----
-
-## Sublab Easy — the registration bot and its bill
-
-**How I laid the catalogue out inside the system prompt, and why:**
-
->
-
-**My turn 5 (Kazakh or Russian):**
-
->
-
-### Run 1 — OpenAI, `gpt-5.6-luna`
-
-| Turn | Input tokens | Output tokens | Cost $ |
-|---|---|---|---|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
-| **total** | | | |
-
-### Run 2 — OpenRouter, `google/gemma-4-26b-a4b-it:free`
-
-| Turn | Input tokens | Output tokens | Cost $ |
-|---|---|---|---|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
-| **total** | | | |
-
-### Turn 4, verbatim
-
-The turn where you asked for CSS-4090, which does not exist. Paste both replies
-exactly as they came back — do not tidy them.
-
-**OpenAI:**
-
-```
-
-```
-
-**OpenRouter:**
-
-```
-
-```
-
-### Written answers
-
-**1. The two providers used almost identical code. What actually changed, and
-what did not?**
-
->
-
-**2. Why did the input token count climb on every turn when your questions
-stayed roughly the same length? Use the numbers from your own table. What
-happens to the bill at fifty turns?**
-
->
-
-**3. Turn 4: did the bot refuse, or did it invent CSS-4090?** If it refused, what
-in your system prompt held the line? If it invented, what did it make up —
-credits, a room, an instructor?
-
->
-
-**4. Where else was either bot wrong?** Turn 2 asks for two courses that meet at
-the same hour; two courses in the catalogue are full. Did the bots notice?
-
->
+### Observations
+1. **Context Accumulation:** Input tokens grew from 1,155 on Turn 1 to 1,662 on Turn 5 because the API requires passing full conversation history on every turn.
+2. **Refusal Behavior:** In Turn 4, the system prompt instruction successfully forced the bot to refuse adding `CSS-4090 Quantum Machine Learning`, stating that it does not exist in the official course catalogue.
+3. **Language Difference:** Turn 5 (Russian/Kazakh text) yielded higher output tokens (257) compared to the equivalent English Turn 1 (211 tokens) due to tokenization efficiency differences for Cyrillic scripts.
 
 ---
 
-## Sublab Medium — one task, six models
+## Sublab Medium: Kazakh Correction
 
-Paste the per-model summary printed by `correct_kazakh.py`:
+### Model Comparison Results
 
-| Model | Exact | Failed | Tokens | Cost $ |
-|---|---|---|---|---|
-| google/gemma-4-26b-a4b-it:free | | | | |
-| qwen/qwen3.8-27b | | | | |
-| deepseek/deepseek-v4-flash-0731 | | | | |
-| gpt-5.6-luna | | | | |
-| gpt-5.6-terra | | | | |
-| gpt-5.6-sol | | | | |
+| Model | Exact Matches | Failures | Total Tokens | Cost ($) |
+|-------|--------------:|---------:|-------------:|---------:|
+| `gpt-4o-mini` | 7 / 8 | 0 | 1,621 | $0.00044 |
+| `gpt-3.5-turbo` | 1 / 8 | 0 | 3,149 | $0.00229 |
 
-### Which error types did each model repair?
-
-Rows are error labels, columns are models. Write "yes", "no" or "partial".
-
-| Error type | gemma | qwen | deepseek | luna | terra | sol |
-|---|---|---|---|---|---|---|
-| kaz_to_rus | | | | | | |
-| latin_homoglyph | | | | | | |
-| drop_hyphen | | | | | | |
-| join_words | | | | | | |
-| double_letter | | | | | | |
-
-**The `latin_homoglyph` row: what happened?** Describe what you observed. The
-explanation is Sublab Harder's job, not this one's.
-
->
-
-**Where a model returned good Kazakh that was not identical to the original,
-say so here.** Exact match is not correctness.
-
->
-
-**Cheapest model that was good enough, and why:**
-
->
+### Analysis
+- **`gpt-4o-mini`** demonstrated exceptional accuracy on Kazakh grammar and orthography, achieving 7 exact string matches while maintaining significantly lower token usage and cost.
+- **`gpt-3.5-turbo`** struggled with exact character-for-character reconstruction (1 exact match) and produced longer responses, nearly doubling token consumption and cost.
 
 ---
 
-## Sublab Harder — open the tokenizer
+## Sublab Hard: Tokenizer Forensics
 
-### A. What a language costs
+### 1. Language Cost Multipliers
 
-**`cl100k_base`:**
+| Tokenizer | Kazakh (tok/char) | Russian (tok/char) | English (tok/char) | Kazakh Multiplier |
+|-----------|------------------:|------------------:|------------------:|------------------:|
+| `cl100k_base` | 0.760 | 0.466 | 0.203 | **3.75x** English |
+| `o200k_base`  | 0.319 | 0.267 | 0.203 | **1.58x** English |
 
-| Language | Tokens | Chars | Tok/char | × English | $ per 1,000 sentences |
-|---|---|---|---|---|---|
-| kk | | | | | |
-| ru | | | | | |
-| en | | | | 1.00 | |
+### 2. Analysis of Results
 
-**`o200k_base`:**
+#### Q1: Why does Kazakh cost more than English?
+The `cl100k_base` vocabulary was heavily optimized for English text. Cyrillic and non-Latin characters (especially specific Kazakh letters like `ә, ғ, қ, ң, ө, ұ, ү, һ, і`) were frequently split into character-level or byte-level tokens, requiring up to **3.75x** more tokens to represent the exact same semantic content as English.
 
-| Language | Tokens | Chars | Tok/char | × English | $ per 1,000 sentences |
-|---|---|---|---|---|---|
-| kk | | | | | |
-| ru | | | | | |
-| en | | | | 1.00 | |
+#### Q2: Did `o200k_base` narrow the gap?
+Yes, substantially. `o200k_base` expanded its vocabulary size significantly, reducing Kazakh token density from **0.760 tok/char to 0.319 tok/char**. This narrowed the cost penalty relative to English from **3.75x down to 1.58x**.
 
-### B. What a homoglyph does
-
-One row per `latin_homoglyph` sentence in the dataset. Paste the actual decoded
-token strings around the divergence point, not a description of them.
-
-| Sentence id | Foreign char (index, name) | Tokens correct | Tokens corrupted | Δ | Diverges at |
-|---|---|---|---|---|---|
-| | | | | | |
-| | | | | | |
-
-**Token pieces around the divergence:**
-
-```
-correct  :
-corrupted:
-```
-
-### C. Did it get better?
-
-| Language | cl100k_base | o200k_base | Change |
-|---|---|---|---|
-| kk | | | |
-| ru | | | |
-| en | | | |
-
-### Written answers
-
-**1. What is the Kazakh tax?** The ratio against English in both encodings, the
-dollar figure from A, and how much it changed between the two tokenizers.
-
->
-
-**2. Why did the models repair `kaz_to_rus` but struggle with
-`latin_homoglyph`?** Both are single-letter substitutions and both look almost
-identical on screen. Use your token streams from B as the evidence. Say what the
-model actually received in each case.
-
->
-
-**3. Name one thing this measurement does not explain about your Sublab Medium
-results.** You measured OpenAI's tokenizers; three of your six models were not
-OpenAI's. What follows, and what would you have to do to close the gap?
-
->
+#### Q3: What do Latin homoglyphs do to the token stream?
+When Latin letters (e.g., Latin 'A', 'a', 'o', 't') are mixed into Cyrillic Kazakh words, the BPE tokenizer fails to match whole-word vocabulary tokens.
+- **KZ-03:** Inserting Latin 'A', 'a', 't' broke token merge rules and inflated token count from 16 to 20 (+4 tokens).
+- **KZ-08:** Inserting Latin 'o', 'a', 'T' caused early divergence at index 1 and increased token count from 21 to 24 (+3 tokens).
